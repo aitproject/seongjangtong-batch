@@ -32,6 +32,8 @@ jobs:
         # GitHub Secrets에 등록된 키들을 환경변수로 주입
         DART_API_KEY: ${{ secrets.DART_API_KEY }}
         DB_ENCRYPTION_KEY: ${{ secrets.DB_ENCRYPTION_KEY }}
+        KRX_ID: ${{ secrets.KRX_ID }}
+        KRX_PW: ${{ secrets.KRX_PW }}
       run: |
         python decrypt_and_run.py
         
