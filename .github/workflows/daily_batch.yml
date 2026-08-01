@@ -9,6 +9,8 @@ on:
 jobs:
   run-batch:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul
     
     steps:
     - name: 📥 저장소 코드 가져오기 (Checkout)
