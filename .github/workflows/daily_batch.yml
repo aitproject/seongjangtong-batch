@@ -47,8 +47,8 @@ jobs:
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
         # 갱신된 암호화 파일들 스테이징 (.enc)
-        git add sgt_inference_batch/data/*.enc
-        git add sgt_inference_batch/scheduler_log.txt
+        git add sgt_inference_batch/data/*.enc || true
+        git add sgt_inference_batch/scheduler_log.txt || true
         
         # 변경사항이 있을 때만 커밋하도록 처리 (에러 방지)
         git commit -m "🚀 [Auto] 일배치 완료 및 데이터 갱신 ($(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
