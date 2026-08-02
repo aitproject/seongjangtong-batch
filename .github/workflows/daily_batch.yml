@@ -48,6 +48,7 @@ jobs:
         
         # 갱신된 암호화 파일들 스테이징 (.enc)
         git add sgt_inference_batch/data/*.enc || true
+        git add sgt_inference_batch/data/json_export/*.enc || true
         git add sgt_inference_batch/scheduler_log.txt || true
         
         # 변경사항이 있을 때만 커밋하도록 처리 (에러 방지)
