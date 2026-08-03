@@ -1,13 +1,13 @@
-name: Daily Inference Batch
+name: Daily Inference Batch - Part 2 (6~13)
 
 on:
   schedule:
-    # 매주 월~금 밤 8시 (한국시간 KST 기준) -> UTC 기준 오전 11시
-    - cron: '0 11 * * 1-5'
-  workflow_dispatch: # GitHub 웹사이트에서 수동으로 [Run workflow] 버튼을 눌러 실행할 수 있게 함
+    # 매주 월~금 오후 11시 50분 (한국시간 KST 기준) -> UTC 기준 오후 2시 50분
+    - cron: '50 14 * * 1-5'
+  workflow_dispatch:
 
 jobs:
-  run-batch:
+  run-batch-part2:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
@@ -22,7 +22,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-        cache: 'pip' # 패키지 다운로드 속도 향상을 위한 캐싱
+        cache: 'pip'
         
     - name: 📦 필요 라이브러리 설치 (Install Dependencies)
       working-directory: ./sgt_inference_batch
@@ -30,29 +30,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: 🚀 보안 배치 스크립트 실행 (Decrypt -> Run -> Encrypt)
+    - name: 🚀 보안 배치 스크립트 실행 Part 2 (Decrypt -> Run 6~13 -> Encrypt)
       working-directory: ./sgt_inference_batch
       env:
-        # GitHub Secrets에 등록된 키들을 환경변수로 주입
         DART_API_KEY: ${{ secrets.DART_API_KEY }}
         DB_ENCRYPTION_KEY: ${{ secrets.DB_ENCRYPTION_KEY }}
         KRX_ID: ${{ secrets.KRX_ID }}
         KRX_PW: ${{ secrets.KRX_PW }}
       run: |
-        python decrypt_and_run.py
+        python decrypt_and_run.py --from 6
         
     - name: 💾 암호화된 결과 파일 GitHub에 자동 저장 (Commit & Push)
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # 갱신된 암호화 파일들 스테이징 (.enc)
         git add sgt_inference_batch/data/*.enc || true
         git add sgt_inference_batch/data/json_export/*.enc || true
         git add sgt_inference_batch/scheduler_log.txt || true
         
-        # 변경사항이 있을 때만 커밋하도록 처리 (에러 방지)
-        git commit -m "🚀 [Auto] 일배치 완료 및 데이터 갱신 ($(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
-        
-        # 원격 저장소(main 브랜치)에 반영
+        git commit -m "🚀 [Auto] 일배치 Part 2 완료 ($(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
         git push origin main

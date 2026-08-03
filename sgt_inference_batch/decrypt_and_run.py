@@ -45,7 +45,8 @@ def main():
         
     print("\n▶️ [2/3] 일배치(run_daily.py) 실행 중...")
     try:
-        subprocess.run([sys.executable, "run_daily.py"], check=True)
+        cmd = [sys.executable, "run_daily.py"] + sys.argv[1:]
+        subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         print(f"❌ 배치 실행 실패: {e}")
         sys.exit(1)
