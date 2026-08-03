@@ -5,6 +5,11 @@ on:
     # 매주 월~금 오후 6시 (한국시간 KST 기준) -> UTC 기준 오전 9시
     - cron: '0 9 * * 1-5'
   workflow_dispatch:
+    inputs:
+      extra_args:
+        description: '추가 파라미터 (예: --end 20260803)'
+        required: false
+        default: ''
 
 jobs:
   run-batch-part1:
@@ -38,7 +43,7 @@ jobs:
         KRX_ID: ${{ secrets.KRX_ID }}
         KRX_PW: ${{ secrets.KRX_PW }}
       run: |
-        python decrypt_and_run.py --only 1,2,3,4,5
+        python decrypt_and_run.py --only 1,2,3,4,5 ${{ github.event.inputs.extra_args }}
         
     - name: 💾 암호화된 결과 파일 GitHub에 자동 저장 (Commit & Push)
       run: |
