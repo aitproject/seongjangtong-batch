@@ -43,7 +43,7 @@ jobs:
         KRX_ID: ${{ secrets.KRX_ID }}
         KRX_PW: ${{ secrets.KRX_PW }}
       run: |
-        python decrypt_and_run.py --from 6 ${{ github.event.inputs.extra_args }}
+        python decrypt_and_run.py --only 3,6,7,8,9,10,11,12,13 ${{ github.event.inputs.extra_args }}
         
     - name: 💾 암호화된 결과 파일 GitHub에 자동 저장 (Commit & Push)
       run: |
