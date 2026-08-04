@@ -1,4 +1,4 @@
-name: Daily Inference Batch - Part 2 (6~13)
+name: Daily Inference Batch - Part 2 (3,6~13)
 
 on:
   schedule:
