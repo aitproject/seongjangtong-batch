@@ -2,8 +2,8 @@ name: Daily Inference Batch - Part 1 (1~5)
 
 on:
   schedule:
-    # 매주 월~금 오후 8시 (한국시간 KST 기준) -> UTC 기준 오전 11시
-    - cron: '0 11 * * 1-5'
+    # 매주 월~금 오후 6시 (한국시간 KST 기준) -> UTC 기준 오전 9시
+    - cron: '0 9 * * 1-5'
   workflow_dispatch:
     inputs:
       extra_args:
