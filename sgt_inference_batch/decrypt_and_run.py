@@ -43,9 +43,45 @@ def main():
     for p_file in data_dir.glob("*.parquet.enc"):
         decrypt_file(p_file, cipher)
         
-    print("\n▶️ [2/3] 일배치(run_daily.py) 실행 중...")
+    print("\n▶️ [2/3] 일배치(run_daily.py) 실행 준비 중...")
+    import sqlite3
+    from datetime import datetime, timedelta
+    
+    cmd = [sys.executable, "run_daily.py"] + sys.argv[1:]
+    
+    # 💡 전달받은 파라미터 중에 --start가 없다면, DB에서 MAX(date)+1 계산해서 주입 (Part 1 실행 시)
+    if "--start" not in cmd:
+        db_path = data_dir / "seongjangtong7y.db"
+        try:
+            if db_path.exists():
+                conn = sqlite3.connect(db_path)
+                cur = conn.cursor()
+                cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='daily_price'")
+                if cur.fetchone():
+                    cur.execute("SELECT MAX(date) FROM daily_price")
+                    max_date = cur.fetchone()[0]
+                    if max_date:
+                        next_date = (datetime.strptime(max_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y%m%d")
+                        today_str = datetime.now().strftime("%Y%m%d")
+                        start_date = next_date if next_date <= today_str else today_str
+                        
+                        cmd.extend(["--start", start_date])
+                        print(f"📌 DB 기준 시작일(MAX+1) 자동 계산: {start_date}")
+                        
+                        # Part 2 전달을 위해 batch_args.txt 에도 --start 추가 기록
+                        args_path = Path("batch_args.txt")
+                        if args_path.exists():
+                            content = args_path.read_text(encoding="utf-8").strip()
+                            if "--start" not in content:
+                                args_path.write_text(f"{content} --start {start_date}", encoding="utf-8")
+                                print(f"📝 batch_args.txt 에 --start {start_date} 기록 완료")
+                conn.close()
+        except Exception as e:
+            print(f"⚠️ 시작일 계산 실패: {e}")
+
     try:
-        subprocess.run([sys.executable, "run_daily.py"], check=True)
+        print(f"▶️ 실행 명령어: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         print(f"❌ 배치 실행 실패: {e}")
         sys.exit(1)
