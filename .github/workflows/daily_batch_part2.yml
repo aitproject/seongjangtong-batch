@@ -25,6 +25,14 @@ jobs:
       with:
         lfs: true
         
+    - name: 📥 이전 데이터 릴리즈에서 다운로드 (Releases)
+      working-directory: ./sgt_inference_batch
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release download latest-batch-data -p "data.tar.gz" --clobber || echo "No previous release found"
+        tar -xzvf data.tar.gz || echo "No data.tar.gz found"
+        
     - name: 🐍 Python 3.12 환경 세팅
       uses: actions/setup-python@v5
       with:
@@ -64,13 +72,27 @@ jobs:
         echo "🚀 Batch Date Args: $EXTRA_ARGS"
         python decrypt_and_run.py --only 6,7,8,9,10,11,12,13 $EXTRA_ARGS
         
-    - name: 💾 암호화된 결과 파일 GitHub에 자동 저장 (Commit & Push)
+    - name: 🚀 파이어베이스 호스팅 배포 (JSON CDN)
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase_key.json
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase_key.json
+        npm install -g firebase-tools
+        firebase deploy --only hosting --project seongjangtongai
+        
+    - name: 💾 데이터 압축 및 릴리즈 업로드 (Releases)
+      working-directory: ./sgt_inference_batch
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        tar -czvf data.tar.gz data/*.enc
+        gh release upload latest-batch-data data.tar.gz --clobber
+        
+    - name: 💾 로그 파일만 GitHub에 자동 저장 (Commit & Push)
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        git add sgt_inference_batch/data/*.enc || true
-        git add sgt_inference_batch/data/json_export/*.enc || true
         git add sgt_inference_batch/scheduler_log.txt || true
         
         git commit -m "🚀 [Auto] 일배치 Part 2 완료 ($(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"

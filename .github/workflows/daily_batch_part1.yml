@@ -57,15 +57,25 @@ jobs:
         echo "🚀 Batch Date Args: $EXTRA_ARGS"
         python decrypt_and_run.py --only 1,2,3,4,5 $EXTRA_ARGS
         
-    - name: 💾 암호화된 결과 파일 GitHub에 자동 저장 (Commit & Push)
+    - name: 💾 데이터 압축 및 릴리즈 업로드 (Releases)
+      working-directory: ./sgt_inference_batch
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # 1. 대용량 DB와 파라미터 파일 압축
+        tar -czvf data.tar.gz data/*.enc batch_args.txt
+        
+        # 2. 릴리즈가 없으면 자동 생성
+        gh release view latest-batch-data || gh release create latest-batch-data --title "Latest Batch Data" --notes "Auto-generated batch data storage"
+        
+        # 3. 릴리즈에 첨부파일(Asset) 덮어쓰기 업로드
+        gh release upload latest-batch-data data.tar.gz --clobber
+        
+    - name: 💾 로그 파일만 GitHub에 자동 저장 (Commit & Push)
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        git add sgt_inference_batch/data/*.enc || true
-        git add sgt_inference_batch/data/json_export/*.enc || true
         git add sgt_inference_batch/scheduler_log.txt || true
-        git add sgt_inference_batch/batch_args.txt || true
-        
         git commit -m "🚀 [Auto] 일배치 Part 1 완료 ($(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
         git push origin main
