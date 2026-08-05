@@ -1,9 +1,9 @@
-name: Daily Inference Batch - Part 1 (1,2,4,5)
+name: Daily Inference Batch - Part 1 (1~5)
 
 on:
   schedule:
-    # 매주 월~금 오후 6시 (한국시간 KST 기준) -> UTC 기준 오전 9시
-    - cron: '0 9 * * 1-5'
+    # 매주 월~금 오후 8시 (한국시간 KST 기준) -> UTC 기준 오전 11시
+    - cron: '0 11 * * 1-5'
   workflow_dispatch:
     inputs:
       extra_args:
@@ -43,7 +43,19 @@ jobs:
         KRX_ID: ${{ secrets.KRX_ID }}
         KRX_PW: ${{ secrets.KRX_PW }}
       run: |
-        python decrypt_and_run.py --only 1,2,4,5 ${{ github.event.inputs.extra_args }}
+        # KST 기준 실행일자 지정
+        if [ -z "${{ github.event.inputs.extra_args }}" ]; then
+          TARGET_DATE=$(TZ='Asia/Seoul' date +%Y%m%d)
+          EXTRA_ARGS="--end $TARGET_DATE"
+        else
+          EXTRA_ARGS="${{ github.event.inputs.extra_args }}"
+        fi
+        
+        # Part 2로 전달할 인자값을 텍스트 파일로 저장
+        echo "$EXTRA_ARGS" > batch_args.txt
+        
+        echo "🚀 Batch Date Args: $EXTRA_ARGS"
+        python decrypt_and_run.py --only 1,2,3,4,5 $EXTRA_ARGS
         
     - name: 💾 암호화된 결과 파일 GitHub에 자동 저장 (Commit & Push)
       run: |
@@ -53,6 +65,7 @@ jobs:
         git add sgt_inference_batch/data/*.enc || true
         git add sgt_inference_batch/data/json_export/*.enc || true
         git add sgt_inference_batch/scheduler_log.txt || true
+        git add sgt_inference_batch/batch_args.txt || true
         
         git commit -m "🚀 [Auto] 일배치 Part 1 완료 ($(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
         git push origin main
