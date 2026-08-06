@@ -1,10 +1,9 @@
 name: Daily Inference Batch - Part 2 (6~13)
 
 on:
-  workflow_run:
-    workflows: ["Daily Inference Batch - Part 1 (1~5)"]
-    types:
-      - completed
+  schedule:
+    # 매주 월~금 오후 11시 (한국시간 KST 기준) -> UTC 기준 오후 2시
+    - cron: '0 14 * * 1-5'
   workflow_dispatch:
     inputs:
       extra_args:
@@ -15,11 +14,10 @@ on:
 jobs:
   run-batch-part2:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     env:
-      TZ: Asia/Seoul
+      TZ: Asia/Seoul 
     
-    steps:
+    steps: 
     - name: 📥 저장소 코드 가져오기 (Checkout)
       uses: actions/checkout@v4
       with:
@@ -28,7 +26,7 @@ jobs:
     - name: 📥 이전 데이터 릴리즈에서 다운로드 (Releases)
       working-directory: ./sgt_inference_batch
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
       run: |
         gh release download latest-batch-data -p "data.tar.gz" --clobber || echo "No previous release found"
         tar -xzvf data.tar.gz || echo "No data.tar.gz found"
