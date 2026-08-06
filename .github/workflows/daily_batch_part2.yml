@@ -1,9 +1,10 @@
 name: Daily Inference Batch - Part 2 (6~13)
 
 on:
-  schedule:
-    # 매주 월~금 오후 11시 (한국시간 KST 기준) -> UTC 기준 오후 2시
-    - cron: '0 14 * * 1-5'
+  workflow_run:
+    workflows: ["Daily Inference Batch - Part 1 (1~5)"]
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       extra_args:
@@ -13,7 +14,10 @@ on:
 
 jobs:
   run-batch-part2:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       TZ: Asia/Seoul 
     
