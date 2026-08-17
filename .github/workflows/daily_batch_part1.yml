@@ -67,6 +67,17 @@ jobs:
         echo "🚀 Batch Date Args: $EXTRA_ARGS"
         python decrypt_and_run.py --only 1,2,3,4,5 $EXTRA_ARGS
         
+    - name: 🛑 휴장일 체크 및 중단
+      working-directory: ./sgt_inference_batch
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [ -f "HOLIDAY.flag" ]; then
+          echo "휴장일이 감지되었습니다. 배치를 중단합니다."
+          gh run cancel ${{ github.run_id }}
+          sleep 60
+        fi
+        
     - name: 💾 데이터 압축 및 릴리즈 업로드 (Releases)
       working-directory: ./sgt_inference_batch
       env:
