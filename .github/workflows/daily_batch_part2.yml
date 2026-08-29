@@ -35,6 +35,9 @@ jobs:
         gh release download latest-batch-data -p "data.tar.gz" --clobber || echo "No previous release found"
         tar -xzvf data.tar.gz || echo "No data.tar.gz found"
         
+        # 사용자가 수동으로 업로드한 개별 암호화 파일(.enc)이 있다면 기존 데이터를 덮어쓰기
+        gh release download latest-batch-data -p "*.enc" --dir data/ --clobber || echo "No standalone enc files found"
+        
     - name: 🐍 Python 3.12 환경 세팅
       uses: actions/setup-python@v5
       with:
@@ -81,6 +84,14 @@ jobs:
       run: |
         tar -czvf data.tar.gz data/*.enc
         gh release upload latest-batch-data data.tar.gz --clobber
+        
+        # 사용자가 수동으로 업로드한 개별 파일(.enc)이 있다면 data.tar.gz에 병합되었으므로 릴리즈에서 정리(삭제)
+        for file in data/*.enc; do
+          if [ -f "$file" ]; then
+            asset_name=$(basename "$file")
+            gh release delete-asset latest-batch-data "$asset_name" -y || echo "Failed to delete $asset_name or it doesn't exist"
+          fi
+        done
         
     - name: 💾 로그 파일만 GitHub에 자동 저장 (Commit & Push)
       run: |
