@@ -124,7 +124,7 @@ jobs:
           git remote add origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
           git push -u origin gh-pages --force
           
-          echo "✅ gh-pages 브랜치로 암호화 JSON CDN 배포 완료"
+          echo "✅ gh-pages 브랜치로 암호화 JSON CDN 배포 완료 (용량 누적 0%)"
         else
           echo "⚠️ data/json_export 폴더가 존재하지 않습니다."
         fi
