@@ -41,7 +41,7 @@ def main():
     print("="*50)
     print("▶️ [1/3] 암호화된 데이터 및 AI 모델 해독 중...")
     decrypt_file(data_dir / "seongjangtong7y.db.enc", cipher)
-    for p_file in data_dir.glob("*.parquet.enc"):
+    for p_file in data_dir.rglob("*.parquet.enc"):
         decrypt_file(p_file, cipher)
         
     if models_dir.exists():
@@ -58,14 +58,14 @@ def main():
         
     print("\n▶️ [3/3] 갱신된 데이터 재암호화 중...")
     encrypt_file(data_dir / "seongjangtong7y.db", cipher)
-    for p_file in data_dir.glob("*.parquet"):
+    for p_file in data_dir.rglob("*.parquet"):
         if not p_file.name.endswith(".enc"):
             encrypt_file(p_file, cipher)
             
     print("\n🧹 원본(평문) 데이터 및 임시 해독 모델 파일 삭제 중...")
     if (data_dir / "seongjangtong7y.db").exists():
         os.remove(data_dir / "seongjangtong7y.db")
-    for p_file in data_dir.glob("*.parquet"):
+    for p_file in data_dir.rglob("*.parquet"):
         if not p_file.name.endswith(".enc"):
             os.remove(p_file)
             

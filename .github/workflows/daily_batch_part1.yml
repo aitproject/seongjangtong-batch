@@ -86,8 +86,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # 1. 대용량 DB와 파라미터 파일 압축
-        tar -czvf data.tar.gz data/*.enc batch_args.txt
+        # 1. 대용량 DB와 파라미터 파일 압축 (하위 폴더 포함)
+        tar -czvf data.tar.gz data/ batch_args.txt
         
         # 2. 릴리즈가 없으면 자동 생성
         gh release view latest-batch-data || gh release create latest-batch-data --title "Latest Batch Data" --notes "Auto-generated batch data storage"

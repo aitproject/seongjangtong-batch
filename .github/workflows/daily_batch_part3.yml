@@ -1,8 +1,8 @@
-name: Daily Inference Batch - Part 3 (12~13)
+name: Daily Inference Batch - Part 3 (9~10)
 
 on:
   workflow_run:
-    workflows: ["Daily Inference Batch - Part 2 (6~11)"]
+    workflows: ["Daily Inference Batch - Part 2 (6~8, 11)"]
     types:
       - completed
   workflow_dispatch:
@@ -50,7 +50,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: 🚀 보안 배치 스크립트 실행 Part 3 (Decrypt -> Run 12~13 AI 추론 & JSON 암호화 -> Encrypt & Clean)
+    - name: 🚀 보안 배치 스크립트 실행 Part 3 (Decrypt -> Run 9~10 피처 계산 -> Encrypt)
       working-directory: ./sgt_inference_batch
       env:
         DART_API_KEY: ${{ secrets.DART_API_KEY }}
@@ -74,27 +74,22 @@ jobs:
           echo "📥 수동 입력 파라미터로 덮어씁니다: $EXTRA_ARGS"
         fi
         
-        echo "🚀 Batch Date Args: $EXTRA_ARGS"
-        python decrypt_and_run.py --only 12,13 $EXTRA_ARGS
+        # Part 4로 전달할 파라미터 파일 유지/갱신
+        echo "$EXTRA_ARGS" > batch_args.txt
         
-    - name: 💾 최종 데이터 및 암호화 JSON 릴리즈 업로드 (Releases)
+        echo "🚀 Batch Date Args: $EXTRA_ARGS"
+        python decrypt_and_run.py --only 9,10 $EXTRA_ARGS
+        
+    - name: 💾 피처 데이터 압축 및 릴리즈 업로드 (Releases)
       working-directory: ./sgt_inference_batch
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # 1. 갱신된 DB 및 피처 데이터 압축
-        tar -czvf data.tar.gz data/*.enc
+        # 1. 갱신된 DB 및 계산된 파케이 피처 데이터(daily/monthly) 압축
+        tar -czvf data.tar.gz data/ batch_args.txt
         gh release upload latest-batch-data data.tar.gz --clobber
         
-        # 2. 암호화된 JSON 결과물이 있다면 json_export.tar.gz로 압축하여 릴리즈에 첨부
-        if [ -d "data/json_export" ]; then
-          tar -czvf json_export.tar.gz data/json_export/*.enc || true
-          if [ -f "json_export.tar.gz" ]; then
-            gh release upload latest-batch-data json_export.tar.gz --clobber
-          fi
-        fi
-        
-        # 3. 릴리즈에 남아있는 임시 단일 파일 정리
+        # 2. 릴리즈에 남아있는 임시 단일 파일 정리
         for file in data/*.enc; do
           if [ -f "$file" ]; then
             asset_name=$(basename "$file")
@@ -102,33 +97,6 @@ jobs:
           fi
         done
         
-    - name: 🌐 암호화 JSON CDN 배포 (gh-pages 브랜치 Force Push)
-      working-directory: ./sgt_inference_batch
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        if [ -d "data/json_export" ]; then
-          cd data/json_export
-          
-          # Git 초기화 및 고아(orphan) 단일 커밋 생성 (과거 히스토리 완전 삭제)
-          git init
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # .json 및 .json.enc 파일 추가
-          git add *.json *.json.enc || git add .
-          git commit -m "🚀 [CDN] 최신 암호화 JSON 데이터 배포 ($(date +'%Y-%m-%d %H:%M:%S'))"
-          
-          # gh-pages 브랜치로 강제 덮어쓰기 (과거 커밋 누적 없이 항상 당일 데이터만 유지)
-          git branch -M gh-pages
-          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
-          git push -u origin gh-pages --force
-          
-          echo "✅ gh-pages 브랜치로 암호화 JSON CDN 배포 완료 (용량 누적 0%)"
-        else
-          echo "⚠️ data/json_export 폴더가 존재하지 않습니다."
-        fi
-
     - name: 💾 로그 파일만 GitHub에 자동 저장 (Commit & Push)
       run: |
         git config --global user.name "github-actions[bot]"
@@ -136,5 +104,5 @@ jobs:
         
         git add sgt_inference_batch/scheduler_log.txt || true
         
-        git commit -m "🚀 [Auto] 일배치 Part 3 완료 (AI 추론 및 JSON 암호화 완료 - $(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
+        git commit -m "🚀 [Auto] 일배치 Part 3 완료 (월별/일별 피처 계산 완료 - $(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
         git push origin main
