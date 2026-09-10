@@ -102,6 +102,33 @@ jobs:
           fi
         done
         
+    - name: 🌐 암호화 JSON CDN 배포 (gh-pages 브랜치 Force Push)
+      working-directory: ./sgt_inference_batch
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [ -d "data/json_export" ]; then
+          cd data/json_export
+          
+          # Git 초기화 및 고아(orphan) 단일 커밋 생성 (과거 히스토리 완전 삭제)
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # .json 및 .json.enc 파일 추가
+          git add *.json *.json.enc || git add .
+          git commit -m "🚀 [CDN] 최신 암호화 JSON 데이터 배포 ($(date +'%Y-%m-%d %H:%M:%S'))"
+          
+          # gh-pages 브랜치로 강제 덮어쓰기 (과거 커밋 누적 없이 항상 당일 데이터만 유지)
+          git branch -M gh-pages
+          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
+          git push -u origin gh-pages --force
+          
+          echo "✅ gh-pages 브랜치로 암호화 JSON CDN 배포 완료"
+        else
+          echo "⚠️ data/json_export 폴더가 존재하지 않습니다."
+        fi
+
     - name: 💾 로그 파일만 GitHub에 자동 저장 (Commit & Push)
       run: |
         git config --global user.name "github-actions[bot]"
