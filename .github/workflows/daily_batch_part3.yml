@@ -1,8 +1,8 @@
-name: Daily Inference Batch - Part 2 (6~11)
+name: Daily Inference Batch - Part 3 (12~13)
 
 on:
   workflow_run:
-    workflows: ["Daily Inference Batch - Part 1 (1~5)"]
+    workflows: ["Daily Inference Batch - Part 2 (6~11)"]
     types:
       - completed
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
         default: ''
 
 jobs:
-  run-batch-part2:
+  run-batch-part3:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
@@ -50,7 +50,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: 🚀 보안 배치 스크립트 실행 Part 2 (Decrypt -> Run 6~11 -> Encrypt)
+    - name: 🚀 보안 배치 스크립트 실행 Part 3 (Decrypt -> Run 12~13 AI 추론 & JSON 암호화 -> Encrypt & Clean)
       working-directory: ./sgt_inference_batch
       env:
         DART_API_KEY: ${{ secrets.DART_API_KEY }}
@@ -58,10 +58,10 @@ jobs:
         KRX_ID: ${{ secrets.KRX_ID }}
         KRX_PW: ${{ secrets.KRX_PW }}
       run: |
-        # Part 1에서 생성하여 전달한 파라미터(기준일자) 파일을 읽어옴
+        # Part 2에서 전달받은 파라미터(기준일자) 파일을 읽어옴
         if [ -f "batch_args.txt" ]; then
           EXTRA_ARGS=$(cat batch_args.txt)
-          echo "📥 Part 1에서 전달받은 파라미터: $EXTRA_ARGS"
+          echo "📥 Part 2에서 전달받은 파라미터: $EXTRA_ARGS"
         else
           echo "⚠️ batch_args.txt 파일이 없습니다. 기본 파라미터를 사용합니다."
           TARGET_DATE=$(TZ='Asia/Seoul' date +%Y%m%d)
@@ -74,22 +74,27 @@ jobs:
           echo "📥 수동 입력 파라미터로 덮어씁니다: $EXTRA_ARGS"
         fi
         
-        # Part 3로 전달할 파라미터 파일 유지/갱신
-        echo "$EXTRA_ARGS" > batch_args.txt
-        
         echo "🚀 Batch Date Args: $EXTRA_ARGS"
-        python decrypt_and_run.py --only 6,7,8,9,10,11 $EXTRA_ARGS
+        python decrypt_and_run.py --only 12,13 $EXTRA_ARGS
         
-    - name: 💾 데이터 압축 및 릴리즈 업로드 (Releases)
+    - name: 💾 최종 데이터 및 암호화 JSON 릴리즈 업로드 (Releases)
       working-directory: ./sgt_inference_batch
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # Part 3에 인자를 전달하기 위해 batch_args.txt 포함하여 압축
-        tar -czvf data.tar.gz data/*.enc batch_args.txt
+        # 1. 갱신된 DB 및 피처 데이터 압축
+        tar -czvf data.tar.gz data/*.enc
         gh release upload latest-batch-data data.tar.gz --clobber
         
-        # 사용자가 수동으로 업로드한 개별 파일(.enc)이 있다면 data.tar.gz에 병합되었으므로 릴리즈에서 정리(삭제)
+        # 2. 암호화된 JSON 결과물이 있다면 json_export.tar.gz로 압축하여 릴리즈에 첨부
+        if [ -d "data/json_export" ]; then
+          tar -czvf json_export.tar.gz data/json_export/*.enc || true
+          if [ -f "json_export.tar.gz" ]; then
+            gh release upload latest-batch-data json_export.tar.gz --clobber
+          fi
+        fi
+        
+        # 3. 릴리즈에 남아있는 임시 단일 파일 정리
         for file in data/*.enc; do
           if [ -f "$file" ]; then
             asset_name=$(basename "$file")
@@ -104,5 +109,5 @@ jobs:
         
         git add sgt_inference_batch/scheduler_log.txt || true
         
-        git commit -m "🚀 [Auto] 일배치 Part 2 완료 ($(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
+        git commit -m "🚀 [Auto] 일배치 Part 3 완료 (AI 추론 및 JSON 암호화 완료 - $(date +'%Y-%m-%d %H:%M:%S'))" || echo "No changes to commit"
         git push origin main

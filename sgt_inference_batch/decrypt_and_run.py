@@ -36,12 +36,17 @@ def encrypt_file(file_path: Path, cipher: Fernet):
 def main():
     cipher = get_cipher()
     data_dir = Path("data")
+    models_dir = Path("models")
     
     print("="*50)
-    print("▶️ [1/3] 암호화된 데이터 해독 중...")
+    print("▶️ [1/3] 암호화된 데이터 및 AI 모델 해독 중...")
     decrypt_file(data_dir / "seongjangtong7y.db.enc", cipher)
     for p_file in data_dir.glob("*.parquet.enc"):
         decrypt_file(p_file, cipher)
+        
+    if models_dir.exists():
+        for m_file in models_dir.glob("*.enc"):
+            decrypt_file(m_file, cipher)
         
     print("\n▶️ [2/3] 일배치(run_daily.py) 실행 중...")
     try:
@@ -57,12 +62,19 @@ def main():
         if not p_file.name.endswith(".enc"):
             encrypt_file(p_file, cipher)
             
-    print("\n🧹 원본(평문) 데이터 임시 파일 삭제 중...")
+    print("\n🧹 원본(평문) 데이터 및 임시 해독 모델 파일 삭제 중...")
     if (data_dir / "seongjangtong7y.db").exists():
         os.remove(data_dir / "seongjangtong7y.db")
     for p_file in data_dir.glob("*.parquet"):
         if not p_file.name.endswith(".enc"):
             os.remove(p_file)
+            
+    if models_dir.exists():
+        for m_enc in models_dir.glob("*.enc"):
+            plain_name = m_enc.name.replace(".enc", "")
+            plain_file = models_dir / plain_name
+            if plain_file.exists():
+                os.remove(plain_file)
             
     print("✅ 깃허브 보안 배치 파이프라인 완료!")
     print("="*50)
