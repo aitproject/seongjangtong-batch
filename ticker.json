@@ -1,0 +1,52 @@
+[
+  {
+    "code": "049520",
+    "name": "유아이엘",
+    "grade": "A",
+    "ai_score": 80,
+    "close": 3880.0,
+    "change_rate_1m": 1.3,
+    "change_rate_str": "▲1.3%",
+    "is_up": true
+  },
+  {
+    "code": "267270",
+    "name": "HD건설기계",
+    "grade": "A",
+    "ai_score": 89,
+    "close": 142500.0,
+    "change_rate_1m": 2.9,
+    "change_rate_str": "▲2.9%",
+    "is_up": true
+  },
+  {
+    "code": "336680",
+    "name": "탑런토탈솔루션",
+    "grade": "A",
+    "ai_score": 80,
+    "close": 2945.0,
+    "change_rate_1m": 11.3,
+    "change_rate_str": "▲11.3%",
+    "is_up": true
+  },
+  {
+    "code": "208860",
+    "name": "다산디엠씨",
+    "grade": "S",
+    "ai_score": 91,
+    "close": 1303.0,
+    "change_rate_1m": 29.8,
+    "change_rate_str": "▲29.8%",
+    "is_up": true
+  },
+  {
+    "code": "424760",
+    "name": "벨로크",
+    "grade": "A",
+    "ai_score": 86,
+    "close": 2320.0,
+    "change_rate_1m": 11.8,
+    "change_rate_str": "▲11.8%",
+    "is_up": true
+  }
+]
