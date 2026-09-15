@@ -1,0 +1,52 @@
+[
+  {
+    "code": "024800",
+    "name": "유성티엔에스",
+    "grade": "A",
+    "ai_score": 82,
+    "close": 4705.0,
+    "change_rate_1m": 9.2,
+    "change_rate_str": "▲9.2%",
+    "is_up": true
+  },
+  {
+    "code": "080580",
+    "name": "오킨스전자",
+    "grade": "B",
+    "ai_score": 78,
+    "close": 21550.0,
+    "change_rate_1m": 29.5,
+    "change_rate_str": "▲29.5%",
+    "is_up": true
+  },
+  {
+    "code": "254120",
+    "name": "자비스",
+    "grade": "S",
+    "ai_score": 94,
+    "close": 1012.0,
+    "change_rate_1m": 11.1,
+    "change_rate_str": "▲11.1%",
+    "is_up": true
+  },
+  {
+    "code": "267290",
+    "name": "경동도시가스",
+    "grade": "A",
+    "ai_score": 83,
+    "close": 21900.0,
+    "change_rate_1m": 1.2,
+    "change_rate_str": "▲1.2%",
+    "is_up": true
+  },
+  {
+    "code": "208350",
+    "name": "지란지교시큐리티",
+    "grade": "A",
+    "ai_score": 82,
+    "close": 2990.0,
+    "change_rate_1m": 7.7,
+    "change_rate_str": "▲7.7%",
+    "is_up": true
+  }
+]
