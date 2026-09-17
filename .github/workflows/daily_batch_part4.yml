@@ -75,6 +75,10 @@ jobs:
           echo "📥 수동 입력 파라미터로 덮어씁니다: $EXTRA_ARGS"
         fi
         
+        # 💡 이전 잔여 JSON 파일 완전 초기화 (과거 평문/암호문 파일 청소)
+        rm -rf data/json_export
+        mkdir -p data/json_export
+
         echo "🚀 Batch Date Args: $EXTRA_ARGS"
         python decrypt_and_run.py --only 12,13 $EXTRA_ARGS
         
@@ -83,8 +87,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # 1. 갱신된 DB 및 피처 데이터 압축
-        tar -czvf data.tar.gz data/
+        # 1. 갱신된 DB 및 피처 데이터 압축 (json_export 및 log 제외하여 Releases 500 에러 방지)
+        tar -czvf data.tar.gz --exclude="data/json_export" --exclude="*.log" data/
         gh release upload latest-batch-data data.tar.gz --clobber
         
         # 2. 암호화된 JSON 결과물이 있다면 json_export.tar.gz로 압축하여 릴리즈에 첨부

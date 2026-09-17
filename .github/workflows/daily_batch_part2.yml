@@ -85,8 +85,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # Part 3에 인자를 전달하기 위해 data/ 및 batch_args.txt 포함하여 압축
-        tar -czvf data.tar.gz data/ batch_args.txt
+        # Part 3에 인자를 전달하기 위해 data/ 및 batch_args.txt 압축 (불필요한 json_export 및 log 제외)
+        tar -czvf data.tar.gz --exclude="data/json_export" --exclude="*.log" data/ batch_args.txt
         gh release upload latest-batch-data data.tar.gz --clobber
         
         # 사용자가 수동으로 업로드한 개별 파일(.enc)이 있다면 data.tar.gz에 병합되었으므로 릴리즈에서 정리(삭제)

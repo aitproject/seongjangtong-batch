@@ -85,8 +85,8 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # 1. 갱신된 DB 및 계산된 파케이 피처 데이터(daily/monthly) 압축
-        tar -czvf data.tar.gz data/ batch_args.txt
+        # 1. 갱신된 DB 및 계산된 파케이 피처 데이터(daily/monthly) 압축 (불필요한 json_export 및 log 제외)
+        tar -czvf data.tar.gz --exclude="data/json_export" --exclude="*.log" data/ batch_args.txt
         gh release upload latest-batch-data data.tar.gz --clobber
         
         # 2. 릴리즈에 남아있는 임시 단일 파일 정리
