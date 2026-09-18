@@ -32,11 +32,18 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
       run: |
-        gh release download latest-batch-data -p "data.tar.gz" --clobber || echo "No previous release found"
-        tar -xzvf data.tar.gz || echo "No data.tar.gz found"
+        # 1. 최신 db.tar.gz 다운로드 시도 (구버전 data.tar.gz 호환)
+        gh release download latest-batch-data -p "db.tar.gz" --clobber || gh release download latest-batch-data -p "data.tar.gz" --clobber || echo "No previous release found"
+        tar -xzvf db.tar.gz || tar -xzvf data.tar.gz || echo "No tar archive found"
         
-        # 사용자가 수동으로 업로드한 개별 암호화 파일(.enc)이 있다면 기존 데이터를 덮어쓰기
+        # 2. 개별 수동 업로드 파일 확인
         gh release download latest-batch-data -p "*.enc" --dir data/ --clobber || echo "No standalone enc files found"
+        
+        # 3. 💡 [안전 Fallback] DB 파일이 없거나 비정상 크기(50MB 미만)일 경우 v1.0.0 원본 DB에서 복구
+        if [ ! -f "data/seongjangtong7y.db.enc" ] || [ $(stat -c%s "data/seongjangtong7y.db.enc" 2>/dev/null || echo 0) -lt 50000000 ]; then
+          echo "⚠️ 정상 DB를 찾을 수 없습니다. v1.0.0 릴리즈에서 원본 DB를 다운로드합니다..."
+          gh release download v1.0.0 -p "seongjangtong7y.db.enc" --dir data/ --clobber || echo "Fallback download failed"
+        fi
         
     - name: 🐍 Python 3.12 환경 세팅
       uses: actions/setup-python@v5
@@ -85,17 +92,14 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # 1. 갱신된 DB 및 계산된 파케이 피처 데이터(daily/monthly) 압축 (불필요한 json_export 및 log 제외)
-        tar -czvf data.tar.gz --exclude="data/json_export" --exclude="*.log" data/ batch_args.txt
-        gh release upload latest-batch-data data.tar.gz --clobber
+        # 1. 갱신된 DB 및 파라미터 압축 (db.tar.gz)
+        tar -czvf db.tar.gz data/seongjangtong7y.db.enc batch_args.txt
         
-        # 2. 릴리즈에 남아있는 임시 단일 파일 정리
-        for file in data/*.enc; do
-          if [ -f "$file" ]; then
-            asset_name=$(basename "$file")
-            gh release delete-asset latest-batch-data "$asset_name" -y || echo "Failed to delete $asset_name or it doesn't exist"
-          fi
-        done
+        # 2. 계산된 파케이 피처 데이터만 압축 (features.tar.gz)
+        tar -czvf features.tar.gz data/daily/*.parquet.enc data/monthly/*.parquet.enc 2>/dev/null || tar -czvf features.tar.gz data/*.parquet.enc 2>/dev/null || echo "No parquet features found"
+        
+        # 3. 릴리즈 업로드
+        gh release upload latest-batch-data db.tar.gz features.tar.gz --clobber
         
     - name: 💾 로그 파일만 GitHub에 자동 저장 (Commit & Push)
       run: |

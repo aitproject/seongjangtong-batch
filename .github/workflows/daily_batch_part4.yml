@@ -32,11 +32,22 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
       run: |
-        gh release download latest-batch-data -p "data.tar.gz" --clobber || echo "No previous release found"
-        tar -xzvf data.tar.gz || echo "No data.tar.gz found"
+        # 1. 최신 db.tar.gz 다운로드 (구버전 data.tar.gz 호환)
+        gh release download latest-batch-data -p "db.tar.gz" --clobber || gh release download latest-batch-data -p "data.tar.gz" --clobber || echo "No db release found"
+        tar -xzvf db.tar.gz || tar -xzvf data.tar.gz || echo "No db archive found"
         
-        # 사용자가 수동으로 업로드한 개별 암호화 파일(.enc)이 있다면 기존 데이터를 덮어쓰기
+        # 2. Part 3에서 생성한 features.tar.gz 다운로드
+        gh release download latest-batch-data -p "features.tar.gz" --clobber || echo "No features archive found"
+        tar -xzvf features.tar.gz || echo "No features extracted"
+        
+        # 3. 개별 수동 업로드 파일 확인
         gh release download latest-batch-data -p "*.enc" --dir data/ --clobber || echo "No standalone enc files found"
+        
+        # 4. 💡 [안전 Fallback] DB 파일이 없거나 비정상 크기(50MB 미만)일 경우 v1.0.0 원본 DB에서 복구
+        if [ ! -f "data/seongjangtong7y.db.enc" ] || [ $(stat -c%s "data/seongjangtong7y.db.enc" 2>/dev/null || echo 0) -lt 50000000 ]; then
+          echo "⚠️ 정상 DB를 찾을 수 없습니다. v1.0.0 릴리즈에서 원본 DB를 다운로드합니다..."
+          gh release download v1.0.0 -p "seongjangtong7y.db.enc" --dir data/ --clobber || echo "Fallback download failed"
+        fi
         
     - name: 🐍 Python 3.12 환경 세팅
       uses: actions/setup-python@v5
@@ -87,11 +98,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # 1. 갱신된 DB 및 피처 데이터 압축 (json_export 및 log 제외하여 Releases 500 에러 방지)
-        tar -czvf data.tar.gz --exclude="data/json_export" --exclude="*.log" data/
-        gh release upload latest-batch-data data.tar.gz --clobber
-        
-        # 2. 암호화된 JSON 결과물이 있다면 json_export.tar.gz로 압축하여 릴리즈에 첨부
+        # 1. 암호화된 JSON 결과물 압축 및 릴리즈 업로드 (json_export.tar.gz)
         if [ -d "data/json_export" ]; then
           tar -czvf json_export.tar.gz data/json_export/*.enc || true
           if [ -f "json_export.tar.gz" ]; then
@@ -99,13 +106,12 @@ jobs:
           fi
         fi
         
-        # 3. 릴리즈에 남아있는 임시 단일 파일 정리
-        for file in data/*.enc; do
-          if [ -f "$file" ]; then
-            asset_name=$(basename "$file")
-            gh release delete-asset latest-batch-data "$asset_name" -y || echo "Failed to delete $asset_name or it doesn't exist"
-          fi
-        done
+        # 2. 💡 [안전 가드] DB 파일이 정상 크기(50MB 이상)일 때만 추론 결과가 반영된 db.tar.gz 갱신 업로드
+        if [ -f "data/seongjangtong7y.db.enc" ] && [ $(stat -c%s "data/seongjangtong7y.db.enc" 2>/dev/null || echo 0) -gt 50000000 ]; then
+          tar -czvf db.tar.gz data/seongjangtong7y.db.enc
+          gh release upload latest-batch-data db.tar.gz --clobber
+          echo "✅ 추론 결과가 반영된 정상 DB(db.tar.gz) 업로드 완료"
+        fi
         
     - name: 🌐 암호화 JSON CDN 배포 (gh-pages 브랜치 Force Push)
       working-directory: ./sgt_inference_batch
